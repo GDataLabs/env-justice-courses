@@ -1,1 +1,1 @@
-# env-justice-courses
+https://gdatalabs.github.io/env-justice-courses/
