@@ -9,13 +9,6 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            // Update selected modules indicator
-            const selectedModulesIndicator = document.getElementById('selected-modules-indicator');
-            if (modules > 0) {
-                selectedModulesIndicator.textContent = `${modules} Module${modules > 1 ? 's' : ''} Selected`;
-            } else {
-                selectedModulesIndicator.textContent = 'No Modules Selected';
-            }
         }
         
         body {
@@ -26,6 +19,137 @@
             color: #2c3e50;
         }
         
+        /* Password Protection Overlay Styles */
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+        
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+        
+        .auth-card {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            transform: scale(0.9);
+            animation: scaleIn 0.3s ease-out forwards;
+        }
+        
+        @keyframes scaleIn {
+            to { transform: scale(1); }
+        }
+        
+        .auth-card h2 {
+            color: #4A7C7E;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        
+        .auth-card p {
+            color: #7f8c8d;
+            margin-bottom: 25px;
+            font-size: 1.1em;
+        }
+        
+        .auth-icon {
+            font-size: 3em;
+            margin-bottom: 20px;
+            color: #9DC88D;
+        }
+        
+        .password-input {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 1.1em;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+        
+        .password-input:focus {
+            outline: none;
+            border-color: #4A7C7E;
+            box-shadow: 0 0 0 3px rgba(74, 124, 126, 0.1);
+        }
+        
+        .password-input.error {
+            border-color: #e74c3c;
+            animation: shake 0.5s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        .auth-button {
+            background: linear-gradient(135deg, #4A7C7E, #9DC88D);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            box-shadow: 0 4px 15px rgba(74, 124, 126, 0.3);
+        }
+        
+        .auth-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 124, 126, 0.4);
+        }
+        
+        .auth-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.9em;
+            margin-top: 10px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .error-message.show {
+            opacity: 1;
+        }
+        
+        .site-content {
+            transition: filter 0.3s;
+        }
+        
+        .site-content.locked {
+            filter: blur(3px);
+            pointer-events: none;
+            user-select: none;
+        }
+        
+        /* Original styles continue below */
         .container {
             max-width: 1400px;
             margin: 0 auto;
@@ -575,7 +699,7 @@
             margin-right: 5px;
         }
         
-                @media (max-width: 968px) {
+        @media (max-width: 968px) {
             .main-grid,
             .audience-details {
                 grid-template-columns: 1fr;
@@ -624,247 +748,327 @@
                 min-height: auto;
             }
         }
+        
+        @keyframes fadeOut { to { opacity: 0; } }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="leaf-icon">🌿</div>
-            <h1>Clean Energy Course Development Calculator</h1>
-            <p class="subtitle">Design your sustainable future with custom training modules</p>
+    <!-- Password Protection Overlay -->
+    <div class="auth-overlay" id="authOverlay">
+        <div class="auth-card">
+            <div class="auth-icon">🔒</div>
+            <h2>Protected Content</h2>
+            <p>Please enter the password to access the Clean Energy Course Calculator</p>
+            <input 
+                type="password" 
+                class="password-input" 
+                id="passwordInput" 
+                placeholder="Enter password"
+                autocomplete="off"
+            >
+            <button class="auth-button" id="authButton">Access Calculator</button>
+            <div class="error-message" id="errorMessage">Incorrect password. Please try again.</div>
         </div>
-        
-        <div class="main-grid">
-            <div class="controls">
-                <div class="control-group">
-                    <label>Select Course Modules: <span style="font-weight: normal; font-size: 0.9em; color: #7f8c8d;">(Click modules to include/exclude)</span></label>
-                    <div class="module-grid">
-                        <div class="module-card selected" data-module="hvac">
-                            <div class="module-icon">🔥❄️</div>
-                            <h5>HVAC Heat Pumps</h5>
-                            <p class="module-impact">High energy efficiency impact</p>
-                            <div class="module-checkbox">
-                                <input type="checkbox" id="module-hvac" class="module-checkbox-input" checked>
-                                <label for="module-hvac">Included</label>
-                            </div>
-                        </div>
-                        <div class="module-card selected" data-module="audit">
-                            <div class="module-icon">📊</div>
-                            <h5>Energy Audits</h5>
-                            <p class="module-impact">Building efficiency analysis</p>
-                            <div class="module-checkbox">
-                                <input type="checkbox" id="module-audit" class="module-checkbox-input" checked>
-                                <label for="module-audit">Included</label>
-                            </div>
-                        </div>
-                        <div class="module-card selected" data-module="solar">
-                            <div class="module-icon">☀️</div>
-                            <h5>Solar Assessment & Installation</h5>
-                            <p class="module-impact">Renewable energy generation</p>
-                            <div class="module-checkbox">
-                                <input type="checkbox" id="module-solar" class="module-checkbox-input" checked>
-                                <label for="module-solar">Included</label>
-                            </div>
-                        </div>
-                        <div class="module-card" data-module="ev">
-                            <div class="module-icon">🚗⚡</div>
-                            <h5>EV Infrastructure</h5>
-                            <p class="module-impact">Transportation electrification</p>
-                            <div class="module-checkbox">
-                                <input type="checkbox" id="module-ev" class="module-checkbox-input">
-                                <label for="module-ev">Include</label>
-                            </div>
-                        </div>
-                        <div class="module-card" data-module="justice">
-                            <div class="module-icon">⚖️🌍</div>
-                            <h5>Environmental Justice</h5>
-                            <p class="module-impact">Equity & community focus</p>
-                            <div class="module-checkbox">
-                                <input type="checkbox" id="module-justice" class="module-checkbox-input">
-                                <label for="module-justice">Include</label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="module-count">Selected Modules: <span class="value-display" id="modules-display">3</span></div>
-                </div>
-                
-                <div class="control-group">
-                    <label>Select Target Audiences:</label>
-                    <div class="checkbox-group">
-                        <label class="checkbox-item">
-                            <input type="checkbox" class="audience-checkbox" value="primary" data-age="8-11" checked>
-                            <span>Primary School (Ages 8-11)</span>
-                        </label>
-                        <label class="checkbox-item">
-                            <input type="checkbox" class="audience-checkbox" value="secondary" data-age="12-18">
-                            <span>Secondary School (Ages 12-18)</span>
-                        </label>
-                        <label class="checkbox-item">
-                            <input type="checkbox" class="audience-checkbox" value="college" data-age="18-22">
-                            <span>College/Technical</span>
-                        </label>
-                        <label class="checkbox-item">
-                            <input type="checkbox" class="audience-checkbox" value="professional" data-age="22+">
-                            <span>Professional/Employee</span>
-                        </label>
-                    </div>
-                </div>
-                
-                <div class="control-group">
-                    <label>Hourly Rate: <span class="value-display" id="rate-display">$125</span></label>
-                    <input type="range" id="hourly-rate" min="100" max="150" value="125" step="5">
-                </div>
-                
-                <div class="control-group">
-                    <label style="display: flex; align-items: center; gap: 10px;">
-                        <input type="checkbox" id="apply-discount" checked>
-                        <span>Apply bundle discount (20% for all 5 modules)</span>
-                    </label>
-                </div>
+    </div>
+    
+    <!-- Main Site Content -->
+    <div class="site-content locked" id="siteContent">
+        <div class="container">
+            <div class="header">
+                <div class="leaf-icon">🌿</div>
+                <h1>Clean Energy Course Development Calculator</h1>
+                <p class="subtitle">Design your sustainable future with custom training modules</p>
             </div>
             
-            <div class="results">
-                <div class="result-item">
-                    <div class="result-label">Total Development Hours</div>
-                    <div class="result-value" id="total-hours">180 hours</div>
-                </div>
-                
-                <div class="result-item">
-                    <div class="result-label">Base Cost (Before Multipliers)</div>
-                    <div class="result-value" id="base-cost">$22,500</div>
-                </div>
-                
-                <div class="result-item">
-                    <div class="result-label">Complexity Multiplier</div>
-                    <div class="result-value" id="multiplier">1.0x</div>
-                </div>
-                
-                <div class="price-highlight">
-                    <div class="result-label">Total Investment</div>
-                    <div class="result-value" id="final-cost">$22,500</div>
-                </div>
-                
-                <div id="discount-notice" class="discount-notice" style="display: none;">
-                    🎉 20% Bundle Discount Applied! 🎉
-                </div>
-            </div>
-        </div>
-        
-        <div class="impact-section">
-            <h2 class="impact-title">🌍 Environmental & Social Impact Analysis</h2>
-            <div class="impact-content">
-                <div class="impact-metrics">
-                    <div class="metric-item">
-                        <div class="metric-icon">👥</div>
-                        <div class="metric-value" id="learners-reached">0</div>
-                        <div class="metric-label">Learners Reached</div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-icon">🌱</div>
-                        <div class="metric-value" id="carbon-impact">0</div>
-                        <div class="metric-label">CO₂ Reduction (tons)</div>
-                    </div>
-                </div>
-                
-                <div class="radar-container">
-                    <canvas id="radarCanvas" width="500" height="500"></canvas>
-                    <div class="legend-box">
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #4A7C7E;"></div>
-                            <span>Current Selection</span>
+            <div class="main-grid">
+                <div class="controls">
+                    <div class="control-group">
+                        <label>Select Course Modules: <span style="font-weight: normal; font-size: 0.9em; color: #7f8c8d;">(Click modules to include/exclude)</span></label>
+                        <div class="module-grid">
+                            <div class="module-card selected" data-module="hvac">
+                                <div class="module-icon">🔥❄️</div>
+                                <h5>HVAC Heat Pumps</h5>
+                                <p class="module-impact">High energy efficiency impact</p>
+                                <div class="module-checkbox">
+                                    <input type="checkbox" id="module-hvac" class="module-checkbox-input" checked>
+                                    <label for="module-hvac">Included</label>
+                                </div>
+                            </div>
+                            <div class="module-card selected" data-module="audit">
+                                <div class="module-icon">📊</div>
+                                <h5>Energy Audits</h5>
+                                <p class="module-impact">Building efficiency analysis</p>
+                                <div class="module-checkbox">
+                                    <input type="checkbox" id="module-audit" class="module-checkbox-input" checked>
+                                    <label for="module-audit">Included</label>
+                                </div>
+                            </div>
+                            <div class="module-card selected" data-module="solar">
+                                <div class="module-icon">☀️</div>
+                                <h5>Solar Assessment & Installation</h5>
+                                <p class="module-impact">Renewable energy generation</p>
+                                <div class="module-checkbox">
+                                    <input type="checkbox" id="module-solar" class="module-checkbox-input" checked>
+                                    <label for="module-solar">Included</label>
+                                </div>
+                            </div>
+                            <div class="module-card" data-module="ev">
+                                <div class="module-icon">🚗⚡</div>
+                                <h5>EV Infrastructure</h5>
+                                <p class="module-impact">Transportation electrification</p>
+                                <div class="module-checkbox">
+                                    <input type="checkbox" id="module-ev" class="module-checkbox-input">
+                                    <label for="module-ev">Include</label>
+                                </div>
+                            </div>
+                            <div class="module-card" data-module="justice">
+                                <div class="module-icon">⚖️🌍</div>
+                                <h5>Environmental Justice</h5>
+                                <p class="module-impact">Equity & community focus</p>
+                                <div class="module-checkbox">
+                                    <input type="checkbox" id="module-justice" class="module-checkbox-input">
+                                    <label for="module-justice">Include</label>
+                                </div>
+                            </div>
                         </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background: #9DC88D;"></div>
-                            <span>Max Potential</span>
+                        <div class="module-count">Selected Modules: <span class="value-display" id="modules-display">3</span></div>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label>Select Target Audiences:</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" class="audience-checkbox" value="primary" data-age="8-11" checked>
+                                <span>Primary School (Ages 8-11)</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" class="audience-checkbox" value="secondary" data-age="12-18">
+                                <span>Secondary School (Ages 12-18)</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" class="audience-checkbox" value="college" data-age="18-22">
+                                <span>College/Technical</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" class="audience-checkbox" value="professional" data-age="22+">
+                                <span>Professional/Employee</span>
+                            </label>
                         </div>
                     </div>
-                    <div id="selected-modules-indicator" style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); font-size: 0.85em; color: #4A7C7E; font-weight: 600;"></div>
+                    
+                    <div class="control-group">
+                        <label>Hourly Rate: <span class="value-display" id="rate-display">$125</span></label>
+                        <input type="range" id="hourly-rate" min="100" max="150" value="125" step="5">
+                    </div>
+                    
+                    <div class="control-group">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="apply-discount" checked>
+                            <span>Apply bundle discount (20% for all 5 modules)</span>
+                        </label>
+                    </div>
                 </div>
                 
-                <div class="impact-metrics">
-                    <div class="metric-item">
-                        <div class="metric-icon">💡</div>
-                        <div class="metric-value" id="learning-hours">0</div>
-                        <div class="metric-label">Learning Hours</div>
+                <div class="results">
+                    <div class="result-item">
+                        <div class="result-label">Total Development Hours</div>
+                        <div class="result-value" id="total-hours">180 hours</div>
                     </div>
-                    <div class="metric-item">
-                        <div class="metric-icon">💼</div>
-                        <div class="metric-value" id="career-paths">0</div>
-                        <div class="metric-label">Career Paths</div>
+                    
+                    <div class="result-item">
+                        <div class="result-label">Base Cost (Before Multipliers)</div>
+                        <div class="result-value" id="base-cost">$22,500</div>
+                    </div>
+                    
+                    <div class="result-item">
+                        <div class="result-label">Complexity Multiplier</div>
+                        <div class="result-value" id="multiplier">1.0x</div>
+                    </div>
+                    
+                    <div class="price-highlight">
+                        <div class="result-label">Total Investment</div>
+                        <div class="result-value" id="final-cost">$22,500</div>
+                    </div>
+                    
+                    <div id="discount-notice" class="discount-notice" style="display: none;">
+                        🎉 20% Bundle Discount Applied! 🎉
                     </div>
                 </div>
             </div>
             
-            <div class="module-impact-breakdown" id="module-impact-breakdown" style="margin-top: 30px; padding: 20px; background: white; border-radius: 15px; display: none;">
-                <h4 style="color: #4A7C7E; margin-bottom: 15px;">Module-Specific Impact Contributions</h4>
-                <div id="module-impacts-list"></div>
+            <div class="impact-section">
+                <h2 class="impact-title">🌍 Environmental & Social Impact Analysis</h2>
+                <div class="impact-content">
+                    <div class="impact-metrics">
+                        <div class="metric-item">
+                            <div class="metric-icon">👥</div>
+                            <div class="metric-value" id="learners-reached">0</div>
+                            <div class="metric-label">Learners Reached</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-icon">🌱</div>
+                            <div class="metric-value" id="carbon-impact">0</div>
+                            <div class="metric-label">CO₂ Reduction (tons)</div>
+                        </div>
+                    </div>
+                    
+                    <div class="radar-container">
+                        <canvas id="radarCanvas" width="500" height="500"></canvas>
+                        <div class="legend-box">
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #4A7C7E;"></div>
+                                <span>Current Selection</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #9DC88D;"></div>
+                                <span>Max Potential</span>
+                            </div>
+                        </div>
+                        <div id="selected-modules-indicator" style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); font-size: 0.85em; color: #4A7C7E; font-weight: 600;"></div>
+                    </div>
+                    
+                    <div class="impact-metrics">
+                        <div class="metric-item">
+                            <div class="metric-icon">💡</div>
+                            <div class="metric-value" id="learning-hours">0</div>
+                            <div class="metric-label">Learning Hours</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-icon">💼</div>
+                            <div class="metric-value" id="career-paths">0</div>
+                            <div class="metric-label">Career Paths</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="module-impact-breakdown" id="module-impact-breakdown" style="margin-top: 30px; padding: 20px; background: white; border-radius: 15px; display: none;">
+                    <h4 style="color: #4A7C7E; margin-bottom: 15px;">Module-Specific Impact Contributions</h4>
+                    <div id="module-impacts-list"></div>
+                </div>
             </div>
-        </div>
-        
-        <div class="breakdown">
-            <h3>💰 Investment Breakdown</h3>
-            <div id="breakdown-details"></div>
-        </div>
-        
-        <div class="info-box">
-            <h4>📚 What's Included in Each Module:</h4>
-            <ul>
-                <li><strong>Content Development (20-25 hours):</strong> 2-3 hours of learner content, research, writing, and editing</li>
-                <li><strong>Interactive Elements (15-20 hours):</strong> 2-3 simulations or interactive activities</li>
-                <li><strong>Assessments (10-12 hours):</strong> Pre-assessment, module quiz, and final project with rubrics</li>
-                <li><strong>Multimedia Assets (8-10 hours):</strong> Custom graphics, diagrams, and optional audio narration</li>
-                <li><strong>Quality Assurance (7-8 hours):</strong> Technical testing, content review, and accessibility checks</li>
-            </ul>
-        </div>
-        
-        <div class="info-box">
-            <h4>🎯 Audience-Specific Learning Experiences:</h4>
-            <div class="audience-details">
-                <div class="audience-card">
-                    <h5>Primary School (Ages 8-11)</h5>
-                    <ul>
-                        <li>45-60 minutes learner time</li>
-                        <li>Story-based learning</li>
-                        <li>Simple drag-and-drop activities</li>
-                        <li>Picture-heavy, minimal text</li>
-                        <li>Basic vocabulary</li>
-                    </ul>
-                </div>
-                <div class="audience-card">
-                    <h5>Secondary School (Ages 12-18)</h5>
-                    <ul>
-                        <li>90-120 minutes learner time</li>
-                        <li>Problem-solving focus</li>
-                        <li>Interactive simulations</li>
-                        <li>Real-world connections</li>
-                        <li>Pre-career exploration</li>
-                    </ul>
-                </div>
-                <div class="audience-card">
-                    <h5>College/Technical</h5>
-                    <ul>
-                        <li>2-3 hours learner time</li>
-                        <li>Technical depth</li>
-                        <li>Industry-standard tools</li>
-                        <li>Hands-on projects</li>
-                        <li>Certification prep</li>
-                    </ul>
-                </div>
-                <div class="audience-card">
-                    <h5>Professional/Employee</h5>
-                    <ul>
-                        <li>2-3 hours learner time</li>
-                        <li>Immediately applicable skills</li>
-                        <li>ROI calculations</li>
-                        <li>Compliance focus</li>
-                        <li>Implementation strategies</li>
-                    </ul>
+            
+            <div class="breakdown">
+                <h3>💰 Investment Breakdown</h3>
+                <div id="breakdown-details"></div>
+            </div>
+            
+            <div class="info-box">
+                <h4>📚 What's Included in Each Module:</h4>
+                <ul>
+                    <li><strong>Content Development (20-25 hours):</strong> 2-3 hours of learner content, research, writing, and editing</li>
+                    <li><strong>Interactive Elements (15-20 hours):</strong> 2-3 simulations or interactive activities</li>
+                    <li><strong>Assessments (10-12 hours):</strong> Pre-assessment, module quiz, and final project with rubrics</li>
+                    <li><strong>Multimedia Assets (8-10 hours):</strong> Custom graphics, diagrams, and optional audio narration</li>
+                    <li><strong>Quality Assurance (7-8 hours):</strong> Technical testing, content review, and accessibility checks</li>
+                </ul>
+            </div>
+            
+            <div class="info-box">
+                <h4>🎯 Audience-Specific Learning Experiences:</h4>
+                <div class="audience-details">
+                    <div class="audience-card">
+                        <h5>Primary School (Ages 8-11)</h5>
+                        <ul>
+                            <li>45-60 minutes learner time</li>
+                            <li>Story-based learning</li>
+                            <li>Simple drag-and-drop activities</li>
+                            <li>Picture-heavy, minimal text</li>
+                            <li>Basic vocabulary</li>
+                        </ul>
+                    </div>
+                    <div class="audience-card">
+                        <h5>Secondary School (Ages 12-18)</h5>
+                        <ul>
+                            <li>90-120 minutes learner time</li>
+                            <li>Problem-solving focus</li>
+                            <li>Interactive simulations</li>
+                            <li>Real-world connections</li>
+                            <li>Pre-career exploration</li>
+                        </ul>
+                    </div>
+                    <div class="audience-card">
+                        <h5>College/Technical</h5>
+                        <ul>
+                            <li>2-3 hours learner time</li>
+                            <li>Technical depth</li>
+                            <li>Industry-standard tools</li>
+                            <li>Hands-on projects</li>
+                            <li>Certification prep</li>
+                        </ul>
+                    </div>
+                    <div class="audience-card">
+                        <h5>Professional/Employee</h5>
+                        <ul>
+                            <li>2-3 hours learner time</li>
+                            <li>Immediately applicable skills</li>
+                            <li>ROI calculations</li>
+                            <li>Compliance focus</li>
+                            <li>Implementation strategies</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
     
     <script>
+        // Password Protection
+        const AUTH_PASSWORD = "ENVIRONMENTALJUSTICE";
+        const authOverlay = document.getElementById('authOverlay');
+        const passwordInput = document.getElementById('passwordInput');
+        const authButton = document.getElementById('authButton');
+        const errorMessage = document.getElementById('errorMessage');
+        const siteContent = document.getElementById('siteContent');
+        
+        // Check if already authenticated in this session
+        const isAuthenticated = sessionStorage.getItem('cleanEnergyAuth') === 'true';
+        
+        if (isAuthenticated) {
+            // Already authenticated, remove overlay and unlock content
+            authOverlay.style.display = 'none';
+            siteContent.classList.remove('locked');
+        }
+        
+        // Handle authentication
+        function authenticate() {
+            const enteredPassword = passwordInput.value;
+            
+            if (enteredPassword === AUTH_PASSWORD) {
+                // Success - store in session and unlock
+                sessionStorage.setItem('cleanEnergyAuth', 'true');
+                authOverlay.style.animation = 'fadeOut 0.3s ease-out forwards';
+                siteContent.classList.remove('locked');
+                
+                setTimeout(() => {
+                    authOverlay.style.display = 'none';
+                }, 300);
+            } else {
+                // Error - show message and shake
+                passwordInput.classList.add('error');
+                errorMessage.classList.add('show');
+                authButton.disabled = true;
+                
+                setTimeout(() => {
+                    passwordInput.classList.remove('error');
+                    errorMessage.classList.remove('show');
+                    authButton.disabled = false;
+                    passwordInput.value = '';
+                    passwordInput.focus();
+                }, 2000);
+            }
+        }
+        
+        // Event listeners for authentication
+        authButton.addEventListener('click', authenticate);
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                authenticate();
+            }
+        });
+        
+        // Auto-focus password input
+        passwordInput.focus();
+        
         // Get all elements
         const modulesDisplay = document.getElementById('modules-display');
         const hourlyRateSlider = document.getElementById('hourly-rate');
@@ -960,9 +1164,17 @@
             const audiences = selectedAudiences.length;
             const applyDiscount = applyDiscountCheckbox.checked && modules === 5;
             
+            // Update selected modules indicator
+            const selectedModulesIndicator = document.getElementById('selected-modules-indicator');
+            if (modules > 0) {
+                selectedModulesIndicator.textContent = `${modules} Module${modules > 1 ? 's' : ''} Selected`;
+            } else {
+                selectedModulesIndicator.textContent = 'No Modules Selected';
+            }
+            
             // Update displays
             modulesDisplay.textContent = modules;
-            rateDisplay.textContent = `${hourlyRate}`;
+            rateDisplay.textContent = `$${hourlyRate}`;
             
             // Calculate hours
             let totalHours = 0;
@@ -1000,9 +1212,9 @@
             
             // Update displays
             totalHoursEl.textContent = `${totalHours.toLocaleString()} hours`;
-            baseCostEl.textContent = `${baseCost.toLocaleString()}`;
+            baseCostEl.textContent = `$${baseCost.toLocaleString()}`;
             multiplierEl.textContent = `${multiplier}x`;
-            finalCostEl.textContent = `${Math.round(finalCost).toLocaleString()}`;
+            finalCostEl.textContent = `$${Math.round(finalCost).toLocaleString()}`;
             
             // Calculate impact metrics with selected modules
             calculateImpact(selectedModules, audiences, selectedAudiences);
@@ -1280,27 +1492,27 @@
                 </div>`;
                 
                 breakdownHTML += `<div class="breakdown-item">
-                    <span>Base Cost (${totalHours.toLocaleString()} hours × ${hourlyRate}/hour)</span>
-                    <span>${baseCost.toLocaleString()}</span>
+                    <span>Base Cost (${totalHours.toLocaleString()} hours × $${hourlyRate}/hour)</span>
+                    <span>$${baseCost.toLocaleString()}</span>
                 </div>`;
                 
                 if (multiplier > 1) {
                     breakdownHTML += `<div class="breakdown-item">
                         <span>Complexity Premium (${((multiplier - 1) * 100).toFixed(0)}%)</span>
-                        <span>${Math.round(baseCost * (multiplier - 1)).toLocaleString()}</span>
+                        <span>$${Math.round(baseCost * (multiplier - 1)).toLocaleString()}</span>
                     </div>`;
                 }
                 
                 if (applyDiscount) {
                     breakdownHTML += `<div class="breakdown-item">
                         <span>Bundle Discount (20%)</span>
-                        <span>-${Math.round(baseCost * multiplier * 0.2).toLocaleString()}</span>
+                        <span>-$${Math.round(baseCost * multiplier * 0.2).toLocaleString()}</span>
                     </div>`;
                 }
                 
                 breakdownHTML += `<div class="breakdown-item">
                     <span>Total Project Investment</span>
-                    <span>${Math.round(finalCost).toLocaleString()}</span>
+                    <span>$${Math.round(finalCost).toLocaleString()}</span>
                 </div>`;
             } else {
                 breakdownHTML = '<p style="color: #7f8c8d; text-align: center;">Please select at least one module and one audience level to see pricing.</p>';
